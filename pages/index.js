@@ -12,10 +12,14 @@ import { markdownify } from "@lib/utils/textConverter";
 import Link from "next/link";
 import { FaRegCalendar } from "react-icons/fa";
 const { blog_folder, pagination } = config.settings;
+import { getPosts } from 'api/posts';
+
+
 
 const Home = ({
   banner,
   posts,
+  blogposts,
   featured_posts,
   recent_posts,
   categories,
@@ -70,7 +74,19 @@ const Home = ({
           </div>
         </div>
       </section>
-
+     
+      
+      <ul>
+      {blogposts.map((post, idx) => (
+      <li key={post.title}>
+        <Link href={`/blog/${post.title}`} key={post.id}><h3>{post.title}</h3>
+        <p>{post.body}</p></Link>
+      </li>
+      ))}
+    </ul>
+    
+    
+     
       {/* Home main */}
       <section className="section">
         <div className="container">
@@ -106,23 +122,28 @@ const Home = ({
   );
 };
 
+
 export default Home;
 
 // for homepage data
-export const getStaticProps = async () => {
+export const getStaticProps = async ({ req }) => {
   const homepage = await getListPage("content/_index.md");
   const { frontmatter } = homepage;
   const { banner, featured_posts, recent_posts, promotion } = frontmatter;
   const posts = getSinglePage(`content/${blog_folder}`);
   const categories = getTaxonomy(`content/${blog_folder}`, "categories");
 
+  const res = await getPosts()
+  const json = await res.json()
+ console.log('s',json);
   const categoriesWithPostsCount = categories.map((category) => {
     const filteredPosts = posts.filter((post) =>
       post.frontmatter.categories.includes(category)
     );
     return {
       name: category,
-      posts: filteredPosts.length,
+      posts: filteredPosts.length
+      
     };
   });
 
@@ -133,6 +154,7 @@ export const getStaticProps = async () => {
       featured_posts,
       recent_posts,
       promotion,
+      blogposts: json,
       categories: categoriesWithPostsCount,
     },
   };
